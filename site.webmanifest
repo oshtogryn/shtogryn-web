@@ -1,0 +1,18 @@
+{
+  "name": "Oleksandr Shtohryn — Technical Services",
+  "short_name": "SHTOGRYN",
+  "description": "Electrical, web design, automation, IT infrastructure and smart home services in Sweden.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0a0c0f",
+  "theme_color": "#0a0c0f",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}
