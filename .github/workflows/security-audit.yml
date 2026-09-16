@@ -31,6 +31,9 @@ jobs:
           test -f sitemap.xml
           test -f .well-known/security.txt
           test -f 404.html
+          test -f privacy.html
+          test -f site.webmanifest
+          test -f favicon.svg
       - name: Verify security headers contract
         shell: bash
         run: |
@@ -41,6 +44,19 @@ jobs:
           grep -q "frame-ancestors 'none'" _headers
           grep -q "object-src 'none'" _headers
           grep -q "form-action https://formsubmit.co" _headers
+      - name: Reject inline executable or style markup
+        shell: bash
+        run: |
+          set -euo pipefail
+          html_files=(index.html uk/index.html sv/index.html ru/index.html privacy.html 404.html)
+          if grep -Ei 'style="|on(click|load|error|submit|focus|mouseover)=' "${html_files[@]}"; then
+            echo "Inline style/event handler detected; keep CSP-compatible markup" >&2
+            exit 1
+          fi
+          if grep -Ei '<script(>|[[:space:]][^>]*>)[^<]+' "${html_files[@]}"; then
+            echo "Inline script content detected; move JavaScript to script.js" >&2
+            exit 1
+          fi
       - name: Verify contact form transport and secret hygiene
         shell: bash
         run: |
@@ -50,7 +66,7 @@ jobs:
             echo "Potential committed credential detected" >&2
             exit 1
           fi
-      - name: Verify sitemap language routes
+      - name: Verify sitemap routes
         shell: bash
         run: |
           set -euo pipefail
@@ -58,6 +74,7 @@ jobs:
           grep -q 'https://shtogryn.com/uk/' sitemap.xml
           grep -q 'https://shtogryn.com/sv/' sitemap.xml
           grep -q 'https://shtogryn.com/ru/' sitemap.xml
+          grep -q 'https://shtogryn.com/privacy.html' sitemap.xml
 
   codeql:
     name: CodeQL JavaScript
