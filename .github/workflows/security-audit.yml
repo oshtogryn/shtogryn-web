@@ -1,0 +1,70 @@
+name: Security & static audit
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  static-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify required public files
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f index.html
+          test -f uk/index.html
+          test -f sv/index.html
+          test -f ru/index.html
+          test -f styles.css
+          test -f script.js
+          test -f _headers
+          test -f robots.txt
+          test -f sitemap.xml
+          test -f .well-known/security.txt
+          test -f 404.html
+      - name: Verify security headers contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "Strict-Transport-Security:" _headers
+          grep -q "Content-Security-Policy:" _headers
+          grep -q "X-Content-Type-Options: nosniff" _headers
+          grep -q "frame-ancestors 'none'" _headers
+          grep -q "object-src 'none'" _headers
+          grep -q "form-action https://formsubmit.co" _headers
+      - name: Verify contact form transport and secret hygiene
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -R -q "https://formsubmit.co/alex.shtogryn@gmail.com" index.html uk/index.html sv/index.html ru/index.html
+          if grep -RIE --exclude-dir=.git --exclude='security-audit.yml' '(api[_-]?key|access[_-]?token|client[_-]?secret|authorization: bearer)[[:space:]]*[:=][[:space:]]*[A-Za-z0-9_./+-]{16,}' .; then
+            echo "Potential committed credential detected" >&2
+            exit 1
+          fi
+      - name: Verify sitemap language routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q 'https://shtogryn.com/' sitemap.xml
+          grep -q 'https://shtogryn.com/uk/' sitemap.xml
+          grep -q 'https://shtogryn.com/sv/' sitemap.xml
+          grep -q 'https://shtogryn.com/ru/' sitemap.xml
+
+  codeql:
+    name: CodeQL JavaScript
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+      - uses: github/codeql-action/analyze@v3
