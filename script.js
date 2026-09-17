@@ -1,4 +1,18 @@
 (() => {
+  const GA_MEASUREMENT_ID = 'G-XV5B4ZYY4J';
+  window.dataLayer = window.dataLayer || [];
+  window.gtag = window.gtag || function gtag(){ window.dataLayer.push(arguments); };
+  window.gtag('js', new Date());
+  window.gtag('config', GA_MEASUREMENT_ID);
+
+  if (!document.querySelector(`script[data-ga4="${GA_MEASUREMENT_ID}"]`)) {
+    const gaScript = document.createElement('script');
+    gaScript.async = true;
+    gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(GA_MEASUREMENT_ID)}`;
+    gaScript.dataset.ga4 = GA_MEASUREMENT_ID;
+    document.head.appendChild(gaScript);
+  }
+
   const lang = document.documentElement.lang || 'en';
 
   const ensureLink = (rel, href, attrs = {}) => {
@@ -276,6 +290,9 @@
 
     form.setAttribute('accept-charset', 'UTF-8');
     form.addEventListener('submit', () => {
+      if (typeof window.gtag === 'function') {
+        window.gtag('event', 'generate_lead', { form_id: 'contact' });
+      }
       if (submit) {
         submit.disabled = true;
         submit.setAttribute('aria-busy', 'true');
