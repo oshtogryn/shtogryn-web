@@ -246,7 +246,7 @@
     const labels = { uk: 'Конфіденційність', ru: 'Конфиденциальность', sv: 'Integritet', en: 'Privacy' };
     const privacy = document.createElement('a');
     privacy.className = 'btn';
-    privacy.href = '/privacy.html';
+    privacy.href = '/privacy';
     privacy.dataset.privacyLink = '1';
     privacy.textContent = labels[lang] || labels.en;
     contactActions.appendChild(privacy);
@@ -259,7 +259,7 @@
     links.className = 'footer-links';
 
     const privacy = document.createElement('a');
-    privacy.href = '/privacy.html';
+    privacy.href = '/privacy';
     privacy.textContent = labels[lang] || labels.en;
 
     const separator = document.createTextNode(' · ');
