@@ -110,7 +110,7 @@ jobs:
       - name: JavaScript syntax check
         run: |
           node --check script.js
-          node --check functions/api/contact.js
+          node --input-type=module --check < functions/api/contact.js
 
   codeql:
     name: CodeQL JavaScript
