@@ -33,6 +33,26 @@
     document.head.appendChild(gaScript);
   };
 
+  const trackEvent = (name, params = {}) => {
+    if (readConsent() !== 'granted') return;
+    if (!document.querySelector(`script[data-ga4="${GA_MEASUREMENT_ID}"]`)) return;
+    window.gtag('event', name, params);
+  };
+
+  document.querySelectorAll('a[href*="/services/"], a[href*="/tjanster/"]').forEach((link) => {
+    link.addEventListener('click', () => trackEvent('service_cta', {
+      link_url: link.href,
+      link_text: (link.textContent || '').trim().slice(0, 100)
+    }));
+  });
+
+  document.querySelectorAll('a.project, [data-project-link]').forEach((link) => {
+    link.addEventListener('click', () => trackEvent('project_click', {
+      project_url: link.href,
+      project_name: (link.querySelector('h3')?.textContent || link.textContent || '').trim().slice(0, 100)
+    }));
+  });
+
   const consentCopy = {
     en: {
       title: 'Analytics cookies',
