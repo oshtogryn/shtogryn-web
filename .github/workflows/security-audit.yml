@@ -87,7 +87,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if grep -R -q "formsubmit.co" index.html uk/index.html sv/index.html ru/index.html _headers; then echo "FormSubmit reference remains" >&2; exit 1; fi
+          if grep -R -q "formsubmit.co" index.html uk/index.html sv/index.html ru/index.html privacy.html _headers; then echo "FormSubmit reference remains" >&2; exit 1; fi
           grep -q "api.brevo.com/v3/smtp/email" functions/api/contact.js
           grep -q "siteverify" functions/api/contact.js
           grep -q "action=\"/api/contact\"" index.html uk/index.html sv/index.html ru/index.html
