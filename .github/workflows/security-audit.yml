@@ -56,6 +56,7 @@ jobs:
           test -f uk/projects/wise-quotes-world/index.html
           test -f ru/projects/sweden-no-sugar/index.html
           test -f ru/projects/wise-quotes-world/index.html
+          test -f functions/api/contact.js
           test -f site.webmanifest
           test -f favicon.svg
       - name: Verify security headers contract
@@ -67,7 +68,8 @@ jobs:
           grep -q "X-Content-Type-Options: nosniff" _headers
           grep -q "frame-ancestors 'none'" _headers
           grep -q "object-src 'none'" _headers
-          grep -q "form-action https://formsubmit.co" _headers
+          grep -q "form-action 'self'" _headers
+          grep -q "challenges.cloudflare.com" _headers
       - name: Reject inline executable or style markup
         shell: bash
         run: |
@@ -85,7 +87,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          grep -R -q "https://formsubmit.co/alex.shtogryn@gmail.com" index.html uk/index.html sv/index.html ru/index.html
+          if grep -R -q "formsubmit.co" index.html uk/index.html sv/index.html ru/index.html _headers; then echo "FormSubmit reference remains" >&2; exit 1; fi
+          grep -q "api.brevo.com/v3/smtp/email" functions/api/contact.js
+          grep -q "siteverify" functions/api/contact.js
+          grep -q "action=\"/api/contact\"" index.html uk/index.html sv/index.html ru/index.html
           if grep -RIE --exclude-dir=.git --exclude='security-audit.yml' '(api[_-]?key|access[_-]?token|client[_-]?secret|authorization: bearer)[[:space:]]*[:=][[:space:]]*[A-Za-z0-9_./+-]{16,}' .; then
             echo "Potential committed credential detected" >&2
             exit 1
@@ -109,7 +114,9 @@ jobs:
           grep -q 'https://shtogryn.com/uk/projects/sweden-no-sugar/' sitemap.xml
           grep -q 'https://shtogryn.com/ru/projects/sweden-no-sugar/' sitemap.xml
       - name: JavaScript syntax check
-        run: node --check script.js
+        run: |
+          node --check script.js
+          node --input-type=module --check < functions/api/contact.js
 
   codeql:
     name: CodeQL JavaScript
