@@ -8,14 +8,18 @@ Personal technical-services website for Oleksandr Shtohryn.
 - `/sv/` — Swedish
 - `/uk/` — Ukrainian
 - `/ru/` — Russian
-- `/privacy.html` — contact/privacy information
+- `/privacy` — canonical contact/privacy information (`/privacy.html` remains a compatibility redirect)
+- `/services/*` — English service landing pages
+- `/sv/tjanster/*` — Swedish service landing pages
+- `/uk/services/*` — Ukrainian service landing pages
+- `/ru/services/*` — Russian service landing pages
 - `/.well-known/security.txt` — security contact
 
 ## Security model
 
 The public site is intentionally static. Browser-delivered code must never contain privileged credentials.
 
-Cloudflare Pages security headers are defined in `_headers` and include HSTS, CSP, `nosniff`, anti-framing, referrer policy, permissions policy and COOP. The current CSP permits local scripts/styles/assets and form submission only to FormSubmit.
+Cloudflare Pages security headers are defined in `_headers` and include HSTS, CSP, `nosniff`, anti-framing, referrer policy, permissions policy and COOP. The current CSP permits local scripts/styles/assets, the required Google Analytics endpoints, and form submission only to FormSubmit.
 
 Secrets such as Cloudflare API credentials, GitHub tokens, API keys, social-platform tokens or future backend credentials belong only in provider secret stores, never in this repository.
 
