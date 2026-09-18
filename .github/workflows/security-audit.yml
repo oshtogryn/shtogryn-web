@@ -32,6 +32,14 @@ jobs:
           test -f .well-known/security.txt
           test -f 404.html
           test -f privacy.html
+          test -f services/web-design/index.html
+          test -f services/web-infrastructure/index.html
+          test -f services/automation/index.html
+          test -f services/smart-home/index.html
+          test -f sv/tjanster/webbdesign/index.html
+          test -f sv/tjanster/webbinfrastruktur/index.html
+          test -f sv/tjanster/automation/index.html
+          test -f sv/tjanster/smarta-hem/index.html
           test -f site.webmanifest
           test -f favicon.svg
       - name: Verify security headers contract
@@ -74,7 +82,9 @@ jobs:
           grep -q 'https://shtogryn.com/uk/' sitemap.xml
           grep -q 'https://shtogryn.com/sv/' sitemap.xml
           grep -q 'https://shtogryn.com/ru/' sitemap.xml
-          grep -q 'https://shtogryn.com/privacy.html' sitemap.xml
+          grep -q 'https://shtogryn.com/privacy' sitemap.xml
+          grep -q 'https://shtogryn.com/services/web-design/' sitemap.xml
+          grep -q 'https://shtogryn.com/sv/tjanster/webbdesign/' sitemap.xml
 
   codeql:
     name: CodeQL JavaScript
