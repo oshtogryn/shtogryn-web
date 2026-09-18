@@ -19,15 +19,24 @@ Personal technical-services website for Oleksandr Shtohryn.
 
 The public site is intentionally static. Browser-delivered code must never contain privileged credentials.
 
-Cloudflare Pages security headers are defined in `_headers` and include HSTS, CSP, `nosniff`, anti-framing, referrer policy, permissions policy and COOP. The current CSP permits local scripts/styles/assets, the required Google Analytics endpoints, and form submission only to FormSubmit.
+Cloudflare Pages security headers are defined in `_headers` and include HSTS, CSP, `nosniff`, anti-framing, referrer policy, permissions policy and COOP. The current CSP permits local scripts/styles/assets, Google Analytics endpoints and Cloudflare Turnstile. Form submission is restricted to the same origin.
 
 Secrets such as Cloudflare API credentials, GitHub tokens, API keys, social-platform tokens or future backend credentials belong only in provider secret stores, never in this repository.
 
 ## Contact form
 
-The current form posts to FormSubmit. Input lengths and duplicate-submit handling are enforced client-side as UX safeguards. Client-side validation is not a substitute for a future server-side endpoint.
+The contact form posts to the first-party Cloudflare Pages Function at `/api/contact`.
 
-Preferred future architecture: `/api/contact` on Cloudflare Pages Functions/Worker + Turnstile server-side validation + rate limiting + provider-side mail delivery.
+Flow: browser → Cloudflare Function → Turnstile verification → server-side validation / abuse controls → Brevo transactional API.
+
+Required Cloudflare environment variables/secrets:
+- `TURNSTILE_SITE_KEY` — public site key returned to the browser by GET `/api/contact`;
+- `TURNSTILE_SECRET_KEY` — secret verification key;
+- `BREVO_API_KEY` — existing Brevo transactional API key;
+- `BREVO_SENDER_EMAIL` — verified Brevo sender;
+- optional `CONTACT_TO_EMAIL` — recipient, defaults to alex.shtogryn@gmail.com.
+
+The endpoint does not subscribe contacts to marketing lists.
 
 ## Validation
 
