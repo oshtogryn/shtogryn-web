@@ -12,4 +12,4 @@ Secrets and credentials must never be committed to this repository or exposed in
 
 ## Current architecture
 
-This site is intentionally static and has no browser-side privileged API credentials. The public contact form uses an external form transport and all browser code must be treated as public.
+This site is intentionally static and has no browser-side privileged API credentials. The public contact form uses a first-party Cloudflare Pages Function. Turnstile and Brevo credentials remain server-side in Cloudflare secret storage; all browser code is still treated as public.
