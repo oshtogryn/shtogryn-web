@@ -1,19 +1,141 @@
 (() => {
   const GA_MEASUREMENT_ID = 'G-XV5B4ZYY4J';
+  const CONSENT_KEY = 'shtogryn_analytics_consent';
+  const lang = document.documentElement.lang || 'en';
+
   window.dataLayer = window.dataLayer || [];
   window.gtag = window.gtag || function gtag(){ window.dataLayer.push(arguments); };
-  window.gtag('js', new Date());
-  window.gtag('config', GA_MEASUREMENT_ID);
 
-  if (!document.querySelector(`script[data-ga4="${GA_MEASUREMENT_ID}"]`)) {
+  window.gtag('consent', 'default', {
+    analytics_storage: 'denied',
+    ad_storage: 'denied',
+    ad_user_data: 'denied',
+    ad_personalization: 'denied'
+  });
+
+  const readConsent = () => {
+    try { return localStorage.getItem(CONSENT_KEY); } catch (_) { return null; }
+  };
+
+  const writeConsent = (value) => {
+    try { localStorage.setItem(CONSENT_KEY, value); } catch (_) {}
+  };
+
+  const loadAnalytics = () => {
+    if (document.querySelector(`script[data-ga4="${GA_MEASUREMENT_ID}"]`)) return;
+    window.gtag('consent', 'update', { analytics_storage: 'granted' });
+    window.gtag('js', new Date());
+    window.gtag('config', GA_MEASUREMENT_ID);
     const gaScript = document.createElement('script');
     gaScript.async = true;
     gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(GA_MEASUREMENT_ID)}`;
     gaScript.dataset.ga4 = GA_MEASUREMENT_ID;
     document.head.appendChild(gaScript);
-  }
+  };
 
-  const lang = document.documentElement.lang || 'en';
+  const consentCopy = {
+    en: {
+      title: 'Analytics cookies',
+      text: 'Allow privacy-conscious analytics so I can understand how this site is used and improve it. No advertising cookies are enabled.',
+      accept: 'Accept analytics',
+      reject: 'Reject',
+      settings: 'Cookie settings',
+      privacy: 'Privacy'
+    },
+    sv: {
+      title: 'Analyscookies',
+      text: 'Tillåt integritetsmedveten analys så att jag kan förstå hur webbplatsen används och förbättra den. Inga annonscookies aktiveras.',
+      accept: 'Tillåt analys',
+      reject: 'Avvisa',
+      settings: 'Cookieinställningar',
+      privacy: 'Integritet'
+    },
+    uk: {
+      title: 'Аналітичні cookies',
+      text: 'Дозвольте аналітику, щоб я міг бачити, як використовується сайт, і покращувати його. Рекламні cookies не вмикаються.',
+      accept: 'Дозволити аналітику',
+      reject: 'Відхилити',
+      settings: 'Налаштування cookies',
+      privacy: 'Конфіденційність'
+    },
+    ru: {
+      title: 'Аналитические cookies',
+      text: 'Разрешите аналитику, чтобы я мог понимать, как используется сайт, и улучшать его. Рекламные cookies не включаются.',
+      accept: 'Разрешить аналитику',
+      reject: 'Отклонить',
+      settings: 'Настройки cookies',
+      privacy: 'Конфиденциальность'
+    }
+  };
+
+  const consentText = consentCopy[lang] || consentCopy.en;
+
+  const removeConsentBanner = () => {
+    const current = document.querySelector('.cookie-consent');
+    if (current) current.remove();
+  };
+
+  const showConsentBanner = () => {
+    removeConsentBanner();
+    const banner = document.createElement('section');
+    banner.className = 'cookie-consent';
+    banner.setAttribute('role', 'dialog');
+    banner.setAttribute('aria-modal', 'false');
+    banner.setAttribute('aria-label', consentText.title);
+
+    const inner = document.createElement('div');
+    inner.className = 'cookie-consent-inner';
+
+    const copy = document.createElement('div');
+    copy.className = 'cookie-consent-copy';
+    const title = document.createElement('strong');
+    title.textContent = consentText.title;
+    const text = document.createElement('p');
+    text.textContent = consentText.text;
+    const privacy = document.createElement('a');
+    privacy.href = '/privacy';
+    privacy.textContent = consentText.privacy;
+    copy.append(title, text, privacy);
+
+    const actions = document.createElement('div');
+    actions.className = 'cookie-consent-actions';
+    const reject = document.createElement('button');
+    reject.type = 'button';
+    reject.className = 'btn';
+    reject.textContent = consentText.reject;
+    const accept = document.createElement('button');
+    accept.type = 'button';
+    accept.className = 'btn primary';
+    accept.textContent = consentText.accept;
+
+    reject.addEventListener('click', () => {
+      writeConsent('denied');
+      window.gtag('consent', 'update', { analytics_storage: 'denied' });
+      removeConsentBanner();
+    });
+
+    accept.addEventListener('click', () => {
+      writeConsent('granted');
+      loadAnalytics();
+      removeConsentBanner();
+    });
+
+    actions.append(reject, accept);
+    inner.append(copy, actions);
+    banner.appendChild(inner);
+    document.body.appendChild(banner);
+  };
+
+  const savedConsent = readConsent();
+  if (savedConsent === 'granted') {
+    loadAnalytics();
+  } else if (savedConsent !== 'denied') {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', showConsentBanner, { once: true });
+    } else {
+      showConsentBanner();
+    }
+  }
 
   const ensureLink = (rel, href, attrs = {}) => {
     let el = document.head.querySelector(`link[rel="${rel}"]`);
@@ -269,6 +391,16 @@
 
     links.append(privacy, separator, security);
     footer.appendChild(links);
+  }
+
+  if (footer && !footer.querySelector('[data-cookie-settings]')) {
+    const settings = document.createElement('button');
+    settings.type = 'button';
+    settings.className = 'cookie-settings-link';
+    settings.dataset.cookieSettings = '1';
+    settings.textContent = consentText.settings;
+    settings.addEventListener('click', showConsentBanner);
+    footer.appendChild(settings);
   }
 
   const form = document.querySelector('.contact-form');
