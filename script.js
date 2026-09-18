@@ -393,6 +393,16 @@
     footer.appendChild(links);
   }
 
+  if (footer && !footer.querySelector('[data-cookie-settings]')) {
+    const settings = document.createElement('button');
+    settings.type = 'button';
+    settings.className = 'cookie-settings-link';
+    settings.dataset.cookieSettings = '1';
+    settings.textContent = consentText.settings;
+    settings.addEventListener('click', showConsentBanner);
+    footer.appendChild(settings);
+  }
+
   const form = document.querySelector('.contact-form');
   if (form) {
     const name = form.querySelector('input[name="name"]');
