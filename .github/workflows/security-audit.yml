@@ -36,18 +36,22 @@ jobs:
           test -f services/web-infrastructure/index.html
           test -f services/automation/index.html
           test -f services/smart-home/index.html
+          test -f services/technical-consulting/index.html
           test -f sv/tjanster/webbdesign/index.html
           test -f sv/tjanster/webbinfrastruktur/index.html
           test -f sv/tjanster/automation/index.html
           test -f sv/tjanster/smarta-hem/index.html
+          test -f sv/tjanster/teknisk-radgivning/index.html
           test -f uk/services/web-design/index.html
           test -f uk/services/web-infrastructure/index.html
           test -f uk/services/automation/index.html
           test -f uk/services/smart-home/index.html
+          test -f uk/services/technical-consulting/index.html
           test -f ru/services/web-design/index.html
           test -f ru/services/web-infrastructure/index.html
           test -f ru/services/automation/index.html
           test -f ru/services/smart-home/index.html
+          test -f ru/services/technical-consulting/index.html
           test -f projects/sweden-no-sugar/index.html
           test -f projects/wise-quotes-world/index.html
           test -f sv/projects/sweden-no-sugar/index.html
@@ -103,6 +107,10 @@ jobs:
           grep -q 'https://shtogryn.com/sv/tjanster/webbdesign/' sitemap.xml
           grep -q 'https://shtogryn.com/uk/services/web-design/' sitemap.xml
           grep -q 'https://shtogryn.com/ru/services/web-design/' sitemap.xml
+          grep -q 'https://shtogryn.com/services/technical-consulting/' sitemap.xml
+          grep -q 'https://shtogryn.com/sv/tjanster/teknisk-radgivning/' sitemap.xml
+          grep -q 'https://shtogryn.com/uk/services/technical-consulting/' sitemap.xml
+          grep -q 'https://shtogryn.com/ru/services/technical-consulting/' sitemap.xml
           grep -q 'https://shtogryn.com/projects/sweden-no-sugar/' sitemap.xml
           grep -q 'https://shtogryn.com/projects/wise-quotes-world/' sitemap.xml
           grep -q 'https://shtogryn.com/sv/projects/sweden-no-sugar/' sitemap.xml
