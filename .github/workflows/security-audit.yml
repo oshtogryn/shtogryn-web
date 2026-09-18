@@ -48,6 +48,14 @@ jobs:
           test -f ru/services/web-infrastructure/index.html
           test -f ru/services/automation/index.html
           test -f ru/services/smart-home/index.html
+          test -f projects/sweden-no-sugar/index.html
+          test -f projects/wise-quotes-world/index.html
+          test -f sv/projects/sweden-no-sugar/index.html
+          test -f sv/projects/wise-quotes-world/index.html
+          test -f uk/projects/sweden-no-sugar/index.html
+          test -f uk/projects/wise-quotes-world/index.html
+          test -f ru/projects/sweden-no-sugar/index.html
+          test -f ru/projects/wise-quotes-world/index.html
           test -f site.webmanifest
           test -f favicon.svg
       - name: Verify security headers contract
@@ -95,6 +103,13 @@ jobs:
           grep -q 'https://shtogryn.com/sv/tjanster/webbdesign/' sitemap.xml
           grep -q 'https://shtogryn.com/uk/services/web-design/' sitemap.xml
           grep -q 'https://shtogryn.com/ru/services/web-design/' sitemap.xml
+          grep -q 'https://shtogryn.com/projects/sweden-no-sugar/' sitemap.xml
+          grep -q 'https://shtogryn.com/projects/wise-quotes-world/' sitemap.xml
+          grep -q 'https://shtogryn.com/sv/projects/sweden-no-sugar/' sitemap.xml
+          grep -q 'https://shtogryn.com/uk/projects/sweden-no-sugar/' sitemap.xml
+          grep -q 'https://shtogryn.com/ru/projects/sweden-no-sugar/' sitemap.xml
+      - name: JavaScript syntax check
+        run: node --check script.js
 
   codeql:
     name: CodeQL JavaScript
