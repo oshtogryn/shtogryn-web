@@ -429,47 +429,145 @@
     const email = form.querySelector('input[name="email"]');
     const message = form.querySelector('textarea[name="message"]');
     const submit = form.querySelector('button[type="submit"]');
+    const status = form.querySelector('[data-form-status]');
+    const turnstileSlot = form.querySelector('[data-turnstile]');
+    let turnstileWidgetId = null;
+    let submitting = false;
 
-    if (name) {
-      name.maxLength = 80;
-      name.minLength = 2;
-    }
+    if (name) { name.maxLength = 80; name.minLength = 2; }
     if (email) email.maxLength = 160;
-    if (message) {
-      message.maxLength = 3000;
-      message.minLength = 10;
-    }
+    if (message) { message.maxLength = 3000; message.minLength = 10; }
 
-    form.setAttribute('accept-charset', 'UTF-8');
-    form.addEventListener('submit', () => {
-      if (typeof window.gtag === 'function') {
-        window.gtag('event', 'generate_lead', { form_id: 'contact' });
+    const setStatus = (text, kind = '') => {
+      if (!status) return;
+      status.textContent = text;
+      status.dataset.state = kind;
+    };
+
+    const messages = {
+      en: {
+        unavailable: 'Secure form verification is temporarily unavailable. Please use the email link instead.',
+        verify: 'Please complete the security verification.',
+        sending: 'Sending…',
+        success: 'Thank you. Your message has been sent.',
+        failed: 'The message could not be sent. Please try again or use the email link.'
+      },
+      sv: {
+        unavailable: 'Säker formulärverifiering är tillfälligt otillgänglig. Använd e-postlänken i stället.',
+        verify: 'Slutför säkerhetsverifieringen.',
+        sending: 'Skickar…',
+        success: 'Tack. Ditt meddelande har skickats.',
+        failed: 'Meddelandet kunde inte skickas. Försök igen eller använd e-postlänken.'
+      },
+      uk: {
+        unavailable: 'Безпечна перевірка форми тимчасово недоступна. Скористайтеся посиланням на email.',
+        verify: 'Будь ласка, пройдіть перевірку безпеки.',
+        sending: 'Надсилання…',
+        success: 'Дякую. Ваше повідомлення надіслано.',
+        failed: 'Не вдалося надіслати повідомлення. Спробуйте ще раз або скористайтеся email.'
+      },
+      ru: {
+        unavailable: 'Безопасная проверка формы временно недоступна. Используйте ссылку на email.',
+        verify: 'Пожалуйста, пройдите проверку безопасности.',
+        sending: 'Отправка…',
+        success: 'Спасибо. Ваше сообщение отправлено.',
+        failed: 'Не удалось отправить сообщение. Попробуйте ещё раз или используйте email.'
       }
+    };
+    const formText = messages[lang] || messages.en;
+
+    const loadTurnstile = async () => {
+      if (!turnstileSlot) return;
+      try {
+        const configResponse = await fetch('/api/contact', { headers: { Accept: 'application/json' } });
+        const config = await configResponse.json();
+        if (!configResponse.ok || !config.siteKey) throw new Error('turnstile_unavailable');
+
+        const renderWidget = () => {
+          if (!window.turnstile || turnstileWidgetId !== null) return;
+          turnstileWidgetId = window.turnstile.render(turnstileSlot, {
+            sitekey: config.siteKey,
+            theme: 'dark'
+          });
+        };
+
+        if (window.turnstile) {
+          renderWidget();
+          return;
+        }
+
+        const existing = document.querySelector('script[data-turnstile-script]');
+        if (existing) {
+          existing.addEventListener('load', renderWidget, { once: true });
+          return;
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+        script.async = true;
+        script.defer = true;
+        script.dataset.turnstileScript = '1';
+        script.addEventListener('load', renderWidget, { once: true });
+        document.head.appendChild(script);
+      } catch (_) {
+        setStatus(formText.unavailable, 'error');
+        if (submit) submit.disabled = true;
+      }
+    };
+
+    loadTurnstile();
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (submitting) return;
+      if (!form.reportValidity()) return;
+
+      const formData = new FormData(form);
+      const token = String(formData.get('cf-turnstile-response') || '');
+      if (!token) {
+        setStatus(formText.verify, 'error');
+        return;
+      }
+
+      submitting = true;
       if (submit) {
         submit.disabled = true;
         submit.setAttribute('aria-busy', 'true');
       }
+      setStatus(formText.sending, 'loading');
+
+      try {
+        const response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({
+            name: String(formData.get('name') || ''),
+            email: String(formData.get('email') || ''),
+            service: String(formData.get('service') || ''),
+            message: String(formData.get('message') || ''),
+            website: String(formData.get('website') || ''),
+            turnstileToken: token
+          })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || result.delivered !== true) throw new Error(result.error || 'delivery_failed');
+
+        setStatus(formText.success, 'success');
+        trackEvent('contact_submit', { form_id: 'contact', service: String(formData.get('service') || '') });
+        trackEvent('generate_lead', { form_id: 'contact', service: String(formData.get('service') || '') });
+        form.reset();
+        if (window.turnstile && turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId);
+      } catch (_) {
+        setStatus(formText.failed, 'error');
+        if (window.turnstile && turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId);
+      } finally {
+        submitting = false;
+        if (submit) {
+          submit.disabled = false;
+          submit.removeAttribute('aria-busy');
+        }
+      }
     });
-  }
-
-  const params = new URLSearchParams(location.search);
-  if (params.get('sent') === '1' && form) {
-    const messages = {
-      uk: 'Дякую. Повідомлення відправлено — я відповім на вказану вами електронну адресу.',
-      ru: 'Спасибо. Сообщение отправлено — я отвечу на указанный вами адрес электронной почты.',
-      sv: 'Tack. Meddelandet har skickats — jag svarar till den e-postadress du angav.',
-      en: 'Thank you. Your message was sent — I will reply to the email address you provided.'
-    };
-
-    const box = document.createElement('div');
-    box.className = 'form-success';
-    box.setAttribute('role', 'status');
-    box.textContent = messages[lang] || messages.en;
-    form.parentNode.insertBefore(box, form);
-
-    params.delete('sent');
-    const query = params.toString();
-    history.replaceState({}, '', location.pathname + (query ? `?${query}` : '') + '#contact');
   }
 
   document.querySelectorAll('a[href^="#"]').forEach((link) => {
