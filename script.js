@@ -405,7 +405,7 @@
 
   const trackEvent = (name, params = {}) => {
     if (readConsent() !== 'granted') return;
-    if (!document.querySelector(\`script[data-ga4="\${GA_MEASUREMENT_ID}"]\`)) return;
+    if (!document.querySelector(`script[data-ga4="${GA_MEASUREMENT_ID}"]`)) return;
     window.gtag('event', name, params);
   };
 
@@ -425,7 +425,7 @@
 
   const injectStructuredData = () => {
     const path = location.pathname;
-    const absolute = (p) => \`https://shtogryn.com\${p}\`;
+    const absolute = (p) => `https://shtogryn.com${p}`;
     let graph = [];
 
     if (['/', '/sv/', '/uk/', '/ru/'].includes(path)) {
@@ -469,7 +469,7 @@
       graph = [
         {
           '@type': 'WebPage',
-          '@id': \`\${absolute(path)}#webpage\`,
+          '@id': `${absolute(path)}#webpage`,
           url: absolute(path),
           name: h1,
           isPartOf: { '@id': 'https://shtogryn.com/#website' }
