@@ -33,6 +33,104 @@
     document.head.appendChild(gaScript);
   };
 
+  const trackEvent = (name, params = {}) => {
+    if (readConsent() !== 'granted') return;
+    if (!document.querySelector(`script[data-ga4="${GA_MEASUREMENT_ID}"]`)) return;
+    window.gtag('event', name, params);
+  };
+
+  document.querySelectorAll('a[href*="/services/"], a[href*="/tjanster/"]').forEach((link) => {
+    link.addEventListener('click', () => trackEvent('service_cta', {
+      link_url: link.href,
+      link_text: (link.textContent || '').trim().slice(0, 100)
+    }));
+  });
+
+  document.querySelectorAll('a.project, [data-project-link]').forEach((link) => {
+    link.addEventListener('click', () => trackEvent('project_click', {
+      project_url: link.href,
+      project_name: (link.querySelector('h3')?.textContent || link.textContent || '').trim().slice(0, 100)
+    }));
+  });
+
+  const injectStructuredData = () => {
+    const path = location.pathname;
+    const absolute = (p) => `https://shtogryn.com${p}`;
+    let graph = [];
+
+    if (['/', '/sv/', '/uk/', '/ru/'].includes(path)) {
+      graph = [
+        {
+          '@type': 'Person',
+          '@id': 'https://shtogryn.com/#person',
+          name: 'Oleksandr Shtohryn',
+          url: absolute(path),
+          jobTitle: 'Electrical engineer and systems specialist',
+          sameAs: ['https://github.com/oshtogryn']
+        },
+        {
+          '@type': 'WebSite',
+          '@id': 'https://shtogryn.com/#website',
+          url: 'https://shtogryn.com/',
+          name: 'SHTOGRYN',
+          inLanguage: ['en', 'sv', 'uk', 'ru']
+        }
+      ];
+    } else if (path.includes('/services/') || path.includes('/tjanster/')) {
+      const h1 = document.querySelector('h1')?.textContent?.trim() || document.title;
+      graph = [
+        {
+          '@type': 'Service',
+          name: h1,
+          url: absolute(path),
+          areaServed: { '@type': 'Country', name: 'Sweden' },
+          provider: { '@id': 'https://shtogryn.com/#person' }
+        },
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'SHTOGRYN', item: 'https://shtogryn.com/' },
+            { '@type': 'ListItem', position: 2, name: h1, item: absolute(path) }
+          ]
+        }
+      ];
+    } else if (path.includes('/projects/')) {
+      const h1 = document.querySelector('h1')?.textContent?.trim() || document.title;
+      graph = [
+        {
+          '@type': 'WebPage',
+          '@id': `${absolute(path)}#webpage`,
+          url: absolute(path),
+          name: h1,
+          isPartOf: { '@id': 'https://shtogryn.com/#website' }
+        },
+        {
+          '@type': 'CreativeWork',
+          name: h1,
+          url: absolute(path),
+          creator: { '@id': 'https://shtogryn.com/#person' }
+        },
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'SHTOGRYN', item: 'https://shtogryn.com/' },
+            { '@type': 'ListItem', position: 2, name: 'Projects', item: 'https://shtogryn.com/#projects' },
+            { '@type': 'ListItem', position: 3, name: h1, item: absolute(path) }
+          ]
+        }
+      ];
+    }
+
+    if (!graph.length || document.getElementById('structured-data')) return;
+    const node = document.createElement('script');
+    node.type = 'application/ld+json';
+    node.id = 'structured-data';
+    node.textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': graph });
+    document.head.appendChild(node);
+  };
+
+  injectStructuredData();
+
   const consentCopy = {
     en: {
       title: 'Analytics cookies',
