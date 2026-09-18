@@ -403,53 +403,218 @@
     footer.appendChild(settings);
   }
 
+  const trackEvent = (name, params = {}) => {
+    if (readConsent() !== 'granted') return;
+    if (!document.querySelector(\`script[data-ga4="\${GA_MEASUREMENT_ID}"]\`)) return;
+    window.gtag('event', name, params);
+  };
+
+  document.querySelectorAll('a[href*="/services/"], a[href*="/tjanster/"]').forEach((link) => {
+    link.addEventListener('click', () => trackEvent('service_cta', {
+      link_url: link.href,
+      link_text: (link.textContent || '').trim().slice(0, 100)
+    }));
+  });
+
+  document.querySelectorAll('a.project, [data-project-link]').forEach((link) => {
+    link.addEventListener('click', () => trackEvent('project_click', {
+      project_url: link.href,
+      project_name: (link.querySelector('h3')?.textContent || link.textContent || '').trim().slice(0, 100)
+    }));
+  });
+
+  const injectStructuredData = () => {
+    const path = location.pathname;
+    const absolute = (p) => \`https://shtogryn.com\${p}\`;
+    let graph = [];
+
+    if (['/', '/sv/', '/uk/', '/ru/'].includes(path)) {
+      graph = [
+        {
+          '@type': 'Person',
+          '@id': 'https://shtogryn.com/#person',
+          name: 'Oleksandr Shtohryn',
+          url: absolute(path),
+          jobTitle: 'Electrical engineer and systems specialist',
+          sameAs: ['https://github.com/oshtogryn']
+        },
+        {
+          '@type': 'WebSite',
+          '@id': 'https://shtogryn.com/#website',
+          url: 'https://shtogryn.com/',
+          name: 'SHTOGRYN',
+          inLanguage: ['en', 'sv', 'uk', 'ru']
+        }
+      ];
+    } else if (path.includes('/services/') || path.includes('/tjanster/')) {
+      const h1 = document.querySelector('h1')?.textContent?.trim() || document.title;
+      graph = [
+        {
+          '@type': 'Service',
+          name: h1,
+          url: absolute(path),
+          areaServed: { '@type': 'Country', name: 'Sweden' },
+          provider: { '@id': 'https://shtogryn.com/#person' }
+        },
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'SHTOGRYN', item: 'https://shtogryn.com/' },
+            { '@type': 'ListItem', position: 2, name: h1, item: absolute(path) }
+          ]
+        }
+      ];
+    } else if (path.includes('/projects/')) {
+      const h1 = document.querySelector('h1')?.textContent?.trim() || document.title;
+      graph = [
+        {
+          '@type': 'WebPage',
+          '@id': \`\${absolute(path)}#webpage\`,
+          url: absolute(path),
+          name: h1,
+          isPartOf: { '@id': 'https://shtogryn.com/#website' }
+        },
+        {
+          '@type': 'CreativeWork',
+          name: h1,
+          url: absolute(path),
+          creator: { '@id': 'https://shtogryn.com/#person' }
+        },
+        {
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'SHTOGRYN', item: 'https://shtogryn.com/' },
+            { '@type': 'ListItem', position: 2, name: 'Projects', item: 'https://shtogryn.com/#projects' },
+            { '@type': 'ListItem', position: 3, name: h1, item: absolute(path) }
+          ]
+        }
+      ];
+    }
+
+    if (!graph.length || document.getElementById('structured-data')) return;
+    const node = document.createElement('script');
+    node.type = 'application/ld+json';
+    node.id = 'structured-data';
+    node.textContent = JSON.stringify({ '@context': 'https://schema.org', '@graph': graph });
+    document.head.appendChild(node);
+  };
+
+  injectStructuredData();
+
   const form = document.querySelector('.contact-form');
   if (form) {
     const name = form.querySelector('input[name="name"]');
     const email = form.querySelector('input[name="email"]');
     const message = form.querySelector('textarea[name="message"]');
+    const service = form.querySelector('select[name="service"]');
     const submit = form.querySelector('button[type="submit"]');
+    const status = form.querySelector('[data-form-status]');
+    const turnstileSlot = form.querySelector('[data-turnstile]');
+    let turnstileWidgetId = null;
+    let submitting = false;
 
-    if (name) {
-      name.maxLength = 80;
-      name.minLength = 2;
-    }
+    if (name) { name.maxLength = 80; name.minLength = 2; }
     if (email) email.maxLength = 160;
-    if (message) {
-      message.maxLength = 3000;
-      message.minLength = 10;
-    }
+    if (message) { message.maxLength = 3000; message.minLength = 10; }
 
-    form.setAttribute('accept-charset', 'UTF-8');
-    form.addEventListener('submit', () => {
-      if (typeof window.gtag === 'function') {
-        window.gtag('event', 'generate_lead', { form_id: 'contact' });
+    const setStatus = (text, kind = '') => {
+      if (!status) return;
+      status.textContent = text;
+      status.dataset.state = kind;
+    };
+
+    const loadTurnstile = async () => {
+      if (!turnstileSlot) return;
+      try {
+        const configResponse = await fetch('/api/contact', { headers: { Accept: 'application/json' } });
+        const config = await configResponse.json();
+        if (!configResponse.ok || !config.siteKey) throw new Error('turnstile_unavailable');
+
+        const renderWidget = () => {
+          if (!window.turnstile || turnstileWidgetId !== null) return;
+          turnstileWidgetId = window.turnstile.render(turnstileSlot, {
+            sitekey: config.siteKey,
+            theme: 'dark'
+          });
+        };
+
+        if (window.turnstile) {
+          renderWidget();
+          return;
+        }
+
+        const existing = document.querySelector('script[data-turnstile-script]');
+        if (existing) {
+          existing.addEventListener('load', renderWidget, { once: true });
+          return;
+        }
+
+        const script = document.createElement('script');
+        script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+        script.async = true;
+        script.defer = true;
+        script.dataset.turnstileScript = '1';
+        script.addEventListener('load', renderWidget, { once: true });
+        document.head.appendChild(script);
+      } catch (_) {
+        setStatus('Secure form verification is temporarily unavailable. Please use the email link instead.', 'error');
+        if (submit) submit.disabled = true;
       }
+    };
+
+    loadTurnstile();
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (submitting) return;
+      if (!form.reportValidity()) return;
+
+      const formData = new FormData(form);
+      const token = String(formData.get('cf-turnstile-response') || '');
+      if (!token) {
+        setStatus('Please complete the security verification.', 'error');
+        return;
+      }
+
+      submitting = true;
       if (submit) {
         submit.disabled = true;
         submit.setAttribute('aria-busy', 'true');
       }
+      setStatus('Sending…', 'loading');
+
+      try {
+        const response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+          body: JSON.stringify({
+            name: String(formData.get('name') || ''),
+            email: String(formData.get('email') || ''),
+            service: String(formData.get('service') || ''),
+            message: String(formData.get('message') || ''),
+            website: String(formData.get('website') || ''),
+            turnstileToken: token
+          })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || result.delivered !== true) throw new Error(result.error || 'delivery_failed');
+
+        setStatus(result.message || 'Thank you. Your message has been sent.', 'success');
+        trackEvent('contact_submit', { form_id: 'contact', service: String(formData.get('service') || '') });
+        trackEvent('generate_lead', { form_id: 'contact', service: String(formData.get('service') || '') });
+        form.reset();
+        if (window.turnstile && turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId);
+      } catch (_) {
+        setStatus('The message could not be sent. Please try again or use the email link.', 'error');
+        if (window.turnstile && turnstileWidgetId !== null) window.turnstile.reset(turnstileWidgetId);
+      } finally {
+        submitting = false;
+        if (submit) {
+          submit.disabled = false;
+          submit.removeAttribute('aria-busy');
+        }
+      }
     });
-  }
-
-  const params = new URLSearchParams(location.search);
-  if (params.get('sent') === '1' && form) {
-    const messages = {
-      uk: 'Дякую. Повідомлення відправлено — я відповім на вказану вами електронну адресу.',
-      ru: 'Спасибо. Сообщение отправлено — я отвечу на указанный вами адрес электронной почты.',
-      sv: 'Tack. Meddelandet har skickats — jag svarar till den e-postadress du angav.',
-      en: 'Thank you. Your message was sent — I will reply to the email address you provided.'
-    };
-
-    const box = document.createElement('div');
-    box.className = 'form-success';
-    box.setAttribute('role', 'status');
-    box.textContent = messages[lang] || messages.en;
-    form.parentNode.insertBefore(box, form);
-
-    params.delete('sent');
-    const query = params.toString();
-    history.replaceState({}, '', location.pathname + (query ? `?${query}` : '') + '#contact');
   }
 
   document.querySelectorAll('a[href^="#"]').forEach((link) => {
