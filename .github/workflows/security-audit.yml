@@ -84,6 +84,18 @@ jobs:
           test -f sv/omraden/botkyrka/index.html
           test -f uk/areas/botkyrka/index.html
           test -f ru/areas/botkyrka/index.html
+          test -f guides/website-cost-stockholm/index.html
+          test -f guides/smart-home-planning-stockholm/index.html
+          test -f guides/business-automation-sweden/index.html
+          test -f sv/guider/vad-kostar-hemsida-stockholm/index.html
+          test -f sv/guider/smarta-hem-planering-stockholm/index.html
+          test -f sv/guider/automation-smaforetag/index.html
+          test -f uk/guides/website-cost-stockholm/index.html
+          test -f uk/guides/smart-home-planning-stockholm/index.html
+          test -f uk/guides/business-automation-sweden/index.html
+          test -f ru/guides/website-cost-stockholm/index.html
+          test -f ru/guides/smart-home-planning-stockholm/index.html
+          test -f ru/guides/business-automation-sweden/index.html
           test -f site.webmanifest
           test -f favicon.svg
       - name: Verify security headers contract
@@ -164,6 +176,18 @@ jobs:
           grep -q 'https://shtogryn.com/sv/omraden/botkyrka/' sitemap.xml
           grep -q 'https://shtogryn.com/uk/areas/botkyrka/' sitemap.xml
           grep -q 'https://shtogryn.com/ru/areas/botkyrka/' sitemap.xml
+          grep -q 'https://shtogryn.com/guides/website-cost-stockholm/' sitemap.xml
+          grep -q 'https://shtogryn.com/guides/smart-home-planning-stockholm/' sitemap.xml
+          grep -q 'https://shtogryn.com/guides/business-automation-sweden/' sitemap.xml
+          grep -q 'https://shtogryn.com/sv/guider/vad-kostar-hemsida-stockholm/' sitemap.xml
+          grep -q 'https://shtogryn.com/sv/guider/smarta-hem-planering-stockholm/' sitemap.xml
+          grep -q 'https://shtogryn.com/sv/guider/automation-smaforetag/' sitemap.xml
+          grep -q 'https://shtogryn.com/uk/guides/website-cost-stockholm/' sitemap.xml
+          grep -q 'https://shtogryn.com/uk/guides/smart-home-planning-stockholm/' sitemap.xml
+          grep -q 'https://shtogryn.com/uk/guides/business-automation-sweden/' sitemap.xml
+          grep -q 'https://shtogryn.com/ru/guides/website-cost-stockholm/' sitemap.xml
+          grep -q 'https://shtogryn.com/ru/guides/smart-home-planning-stockholm/' sitemap.xml
+          grep -q 'https://shtogryn.com/ru/guides/business-automation-sweden/' sitemap.xml
       - name: JavaScript syntax check
         run: node --check script.js
 
