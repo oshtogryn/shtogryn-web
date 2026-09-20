@@ -64,6 +64,26 @@ jobs:
           test -f uk/projects/wise-quotes-world/index.html
           test -f ru/projects/sweden-no-sugar/index.html
           test -f ru/projects/wise-quotes-world/index.html
+          test -f areas/stockholm/index.html
+          test -f sv/omraden/stockholm/index.html
+          test -f uk/areas/stockholm/index.html
+          test -f ru/areas/stockholm/index.html
+          test -f areas/haninge/index.html
+          test -f sv/omraden/haninge/index.html
+          test -f uk/areas/haninge/index.html
+          test -f ru/areas/haninge/index.html
+          test -f areas/vasterhaninge/index.html
+          test -f sv/omraden/vasterhaninge/index.html
+          test -f uk/areas/vasterhaninge/index.html
+          test -f ru/areas/vasterhaninge/index.html
+          test -f areas/handen/index.html
+          test -f sv/omraden/handen/index.html
+          test -f uk/areas/handen/index.html
+          test -f ru/areas/handen/index.html
+          test -f areas/botkyrka/index.html
+          test -f sv/omraden/botkyrka/index.html
+          test -f uk/areas/botkyrka/index.html
+          test -f ru/areas/botkyrka/index.html
           test -f site.webmanifest
           test -f favicon.svg
       - name: Verify security headers contract
@@ -124,6 +144,26 @@ jobs:
           grep -q 'https://shtogryn.com/sv/projects/sweden-no-sugar/' sitemap.xml
           grep -q 'https://shtogryn.com/uk/projects/sweden-no-sugar/' sitemap.xml
           grep -q 'https://shtogryn.com/ru/projects/sweden-no-sugar/' sitemap.xml
+          grep -q 'https://shtogryn.com/areas/stockholm/' sitemap.xml
+          grep -q 'https://shtogryn.com/sv/omraden/stockholm/' sitemap.xml
+          grep -q 'https://shtogryn.com/uk/areas/stockholm/' sitemap.xml
+          grep -q 'https://shtogryn.com/ru/areas/stockholm/' sitemap.xml
+          grep -q 'https://shtogryn.com/areas/haninge/' sitemap.xml
+          grep -q 'https://shtogryn.com/sv/omraden/haninge/' sitemap.xml
+          grep -q 'https://shtogryn.com/uk/areas/haninge/' sitemap.xml
+          grep -q 'https://shtogryn.com/ru/areas/haninge/' sitemap.xml
+          grep -q 'https://shtogryn.com/areas/vasterhaninge/' sitemap.xml
+          grep -q 'https://shtogryn.com/sv/omraden/vasterhaninge/' sitemap.xml
+          grep -q 'https://shtogryn.com/uk/areas/vasterhaninge/' sitemap.xml
+          grep -q 'https://shtogryn.com/ru/areas/vasterhaninge/' sitemap.xml
+          grep -q 'https://shtogryn.com/areas/handen/' sitemap.xml
+          grep -q 'https://shtogryn.com/sv/omraden/handen/' sitemap.xml
+          grep -q 'https://shtogryn.com/uk/areas/handen/' sitemap.xml
+          grep -q 'https://shtogryn.com/ru/areas/handen/' sitemap.xml
+          grep -q 'https://shtogryn.com/areas/botkyrka/' sitemap.xml
+          grep -q 'https://shtogryn.com/sv/omraden/botkyrka/' sitemap.xml
+          grep -q 'https://shtogryn.com/uk/areas/botkyrka/' sitemap.xml
+          grep -q 'https://shtogryn.com/ru/areas/botkyrka/' sitemap.xml
       - name: JavaScript syntax check
         run: node --check script.js
 
