@@ -423,11 +423,13 @@
     footer.appendChild(settings);
   }
 
+  const LEAD_SERVICE_KEY = 'shtogryn_lead_service';
   const form = document.querySelector('.contact-form');
   if (form) {
     const name = form.querySelector('input[name="name"]');
     const email = form.querySelector('input[name="email"]');
     const message = form.querySelector('textarea[name="message"]');
+    const service = form.querySelector('select[name="service"]');
     const submit = form.querySelector('button[type="submit"]');
 
     if (name) {
@@ -442,15 +444,26 @@
 
     form.setAttribute('accept-charset', 'UTF-8');
     form.addEventListener('submit', () => {
-      if (typeof window.gtag === 'function') {
-        window.gtag('event', 'generate_lead', { form_id: 'contact' });
-      }
+      const selectedService = (service?.value || '').slice(0, 120);
+      try { sessionStorage.setItem(LEAD_SERVICE_KEY, selectedService); } catch (_) {}
+      trackEvent('contact_submit', {
+        form_id: 'contact',
+        service: selectedService,
+        page_path: location.pathname
+      });
       if (submit) {
         submit.disabled = true;
         submit.setAttribute('aria-busy', 'true');
       }
     });
   }
+
+  document.querySelectorAll('a.email-link, a[href^="mailto:"]').forEach((link) => {
+    link.addEventListener('click', () => trackEvent('contact_intent', {
+      contact_method: 'email',
+      page_path: location.pathname
+    }));
+  });
 
   const params = new URLSearchParams(location.search);
   if (params.get('sent') === '1' && form) {
@@ -466,6 +479,17 @@
     box.setAttribute('role', 'status');
     box.textContent = messages[lang] || messages.en;
     form.parentNode.insertBefore(box, form);
+
+    let selectedService = '';
+    try {
+      selectedService = sessionStorage.getItem(LEAD_SERVICE_KEY) || '';
+      sessionStorage.removeItem(LEAD_SERVICE_KEY);
+    } catch (_) {}
+    trackEvent('generate_lead', {
+      form_id: 'contact',
+      service: selectedService.slice(0, 120),
+      page_path: location.pathname
+    });
 
     params.delete('sent');
     const query = params.toString();
